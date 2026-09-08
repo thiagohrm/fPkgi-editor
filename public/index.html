@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fPKGi List Editor</title>
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/679/679827.png" type="image/png">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --input-bg: #ffffff;
+            --accent: #f1f5f9;
+        }
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --input-bg: #0f172a;
+            --accent: #334155;
+        }
+        body { font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; margin: 0; background: var(--bg); color: var(--text); line-height: 1.6; transition: background 0.3s, color 0.3s; }
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.025em; margin: 0; background: linear-gradient(to right, var(--primary), #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .theme-toggle { 
+            cursor: pointer; padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); 
+            background: var(--card-bg); color: var(--text); font-weight: 600; font-size: 14px; transition: all 0.2s;
+        }
+        .theme-toggle:hover { background: var(--accent); }
+
+        .search-container { margin-bottom: 30px; display: flex; justify-content: center; }
+        #search { 
+            width: 100%; max-width: 500px; padding: 12px 20px; 
+            font-size: 16px; border: 2px solid var(--border); 
+            border-radius: 12px; outline: none; transition: all 0.3s;
+            background: var(--input-bg); color: var(--text);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        #search:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+
+        .card { 
+            background: var(--card-bg); padding: 25px; border-radius: 16px; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); margin-bottom: 30px; 
+            border: 1px solid var(--border);
+        }
+        .card h3 { margin-top: 0; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; font-weight: 700; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-size: 13px; margin-bottom: 6px; color: var(--text-muted); font-weight: 600; }
+        input { 
+            padding: 10px; border: 1px solid var(--border); border-radius: 8px; 
+            font-size: 14px; background: var(--input-bg); color: var(--text); transition: all 0.2s;
+        }
+        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+
+        .btn { 
+            padding: 12px 24px; cursor: pointer; border: none; 
+            border-radius: 8px; font-weight: 600; transition: all 0.2s; 
+            display: inline-block; text-align: center;
+        }
+        .btn-primary { background: var(--primary); color: white; margin-top: 20px; width: 100%; max-width: 300px; }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .btn-danger { background: var(--danger); color: white; padding: 6px 12px; font-size: 13px; }
+        .btn-danger:hover { background: var(--danger-hover); transform: translateY(-1px); }
+
+        .table-container { overflow-x: auto; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; background: var(--card-bg); }
+        th, td { padding: 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background-color: var(--accent); color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: var(--accent); }
+        
+        .cover-preview {
+            position: absolute;
+            display: none;
+            z-index: 100;
+            border: 3px solid white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            max-width: 200px;
+            pointer-events: none;
+        }
+        
+        .badge { 
+            padding: 4px 10px; border-radius: 6px; font-size: 12px; 
+            font-weight: 600; background: var(--accent); color: var(--text); 
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="cover-preview" class="cover-preview"></div>
+        <div class="header">
+            <h1>fPKGi List Editor</h1>
+            <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙 Dark Mode</button>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="search" placeholder="Search packages by name..." onkeyup="loadGames()">
+        </div>
+
+        <div id="add-game-form" class="card">
+            <h3>Add New Game</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>PKG URL (Key)</label>
+                    <input type="text" id="url" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="name">
+                </div>
+                <div class="form-group">
+                    <label>Title ID</label>
+                    <input type="text" id="title_id">
+                </div>
+                <div class="form-group">
+                    <label>Region</label>
+                    <input type="text" id="region">
+                </div>
+                <div class="form-group">
+                    <label>Version</label>
+                    <input type="text" id="version">
+                </div>
+                <div class="form-group">
+                    <label>Size (bytes)</label>
+                    <input type="number" id="size">
+                </div>
+                <div class="form-group">
+                    <label>Min Firmware</label>
+                    <input type="text" id="min_fw">
+                </div>
+                <div class="form-group">
+                    <label>Cover URL</label>
+                    <input type="text" id="cover_url">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="addGame()">Add Game to List</button>
+        </div>
+
+        <div class="table-container">
+            <table id="games-table">
+        <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Title ID</th>
+                        <th>Region</th>
+                        <th>Version</th>
+                        <th style="text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('theme-btn');
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                btn.innerText = '🌙 Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                btn.innerText = '☀️ Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            document.getElementById('theme-btn').innerText = '☀️ Light Mode';
+        }
+
+        async function loadGames() {
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            const res = await fetch('/games');
+            const data = await res.json();
+            window.allGamesData = data.DATA; // Store data globally
+            const tbody = document.querySelector('#games-table tbody');
+            tbody.innerHTML = '';
+            
+            for (const [url, game] of Object.entries(data.DATA)) {
+                if (game.name.toLowerCase().includes(searchTerm)) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${game.name}</strong></td>
+                        <td><a href="https://orbispatches.com/${game.title_id}" target="_blank" style="text-decoration: none;"><span class="badge">${game.title_id}</span></a></td>
+                        <td>${game.region}</td>
+                        <td>${game.version}</td>
+                        <td style="text-align: center;">
+                            <button class="btn" style="background:#64748b; color:white; margin-right:5px;" onclick="window.editGame('${url}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteGame('${url}')">Delete</button>
+                        </td>
+                    `;
+                    
+                    tr.onmouseenter = (e) => {
+                        const preview = document.getElementById('cover-preview');
+                        preview.innerHTML = `<img src="${game.cover_url}" style="width:100%; display:block; border-radius:5px;">`;
+                        preview.style.display = 'block';
+                        preview.style.left = e.pageX + 15 + 'px';
+                        preview.style.top = e.pageY + 15 + 'px';
+                    };
+                    tr.onmousemove = (e) => {
+                        const preview = document.getElementById('cover-preview');
+                        preview.style.left = e.pageX + 15 + 'px';
+                        preview.style.top = e.pageY + 15 + 'px';
+                    };
+                    tr.onmouseleave = () => {
+                        document.getElementById('cover-preview').style.display = 'none';
+                    };
+                    
+                    tbody.appendChild(tr);
+                }
+            }
+        }
+
+        async function addGame() {
+            const url = document.getElementById('url').value;
+            const gameData = {
+                name: document.getElementById('name').value,
+                title_id: document.getElementById('title_id').value,
+                region: document.getElementById('region').value,
+                version: document.getElementById('version').value,
+                size: parseInt(document.getElementById('size').value),
+                min_fw: document.getElementById('min_fw').value,
+                cover_url: document.getElementById('cover_url').value,
+                release: new Date().toISOString().split('T')[0]
+            };
+
+            const body = {};
+            body[url] = gameData;
+
+            await fetch('/games', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            loadGames();
+            document.querySelectorAll('#add-game-form input').forEach(i => i.value = '');
+        }
+
+        async function deleteGame(url) {
+            if (!confirm('Are you sure?')) return;
+            await fetch('/games', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+            loadGames();
+        }
+
+        window.editGame = async function(url) {
+            console.log('Editing game:', url);
+            const game = window.allGamesData[url];
+            if (!game) {
+                console.error('Game data not found for URL:', url);
+                return;
+            }
+            
+            document.getElementById('url').value = url;
+            document.getElementById('name').value = game.name;
+            document.getElementById('title_id').value = game.title_id;
+            document.getElementById('region').value = game.region;
+            document.getElementById('version').value = game.version;
+            document.getElementById('size').value = game.size;
+            document.getElementById('min_fw').value = game.min_fw;
+            document.getElementById('cover_url').value = game.cover_url;
+
+            document.getElementById('add-game-form').scrollIntoView({ behavior: 'smooth' });
+            
+            const btn = document.querySelector('.btn-primary');
+            const originalText = btn.innerText;
+            btn.innerText = 'Update Game';
+            btn.onclick = async () => {
+                const updatedData = {
+                    name: document.getElementById('name').value,
+                    title_id: document.getElementById('title_id').value,
+                    region: document.getElementById('region').value,
+                    version: document.getElementById('version').value,
+                    size: parseInt(document.getElementById('size').value),
+                    min_fw: document.getElementById('min_fw').value,
+                    cover_url: document.getElementById('cover_url').value,
+                };
+
+                await fetch('/games', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, updatedData })
+                });
+                
+                btn.innerText = originalText;
+                btn.onclick = addGame;
+                loadGames();
+                document.querySelectorAll('#add-game-form input').forEach(i => i.value = '');
+            };
+        }
+
+        loadGames();
+    </script>
+</body>
+</html>
